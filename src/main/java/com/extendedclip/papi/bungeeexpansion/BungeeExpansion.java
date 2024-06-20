@@ -5,16 +5,16 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
+import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.expansion.Configurable;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.clip.placeholderapi.expansion.Taskable;
+import me.clip.placeholderapi.libs.universalScheduler.scheduling.tasks.MyScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
-import org.bukkit.scheduler.BukkitTask;
 
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -35,7 +35,7 @@ public final class BungeeExpansion extends PlaceholderExpansion implements Plugi
 
 
     private final Map<String, Integer>        counts = new HashMap<>();
-    private final AtomicReference<BukkitTask> cached = new AtomicReference<>();
+    private final AtomicReference<MyScheduledTask> cached = new AtomicReference<>();
 
     private static Field inputField;
 
@@ -88,7 +88,7 @@ public final class BungeeExpansion extends PlaceholderExpansion implements Plugi
 
     @Override
     public void start() {
-        final BukkitTask task = Bukkit.getScheduler().runTaskTimer(getPlaceholderAPI(), () -> {
+        final MyScheduledTask task = PlaceholderAPIPlugin.getScheduler().runTaskTimer(() -> {
 
             if (counts.isEmpty()) {
                 sendServersChannelMessage();
@@ -100,7 +100,7 @@ public final class BungeeExpansion extends PlaceholderExpansion implements Plugi
         }, 20L * 2L, 20L * getLong(CONFIG_INTERVAL, 30));
 
 
-        final BukkitTask prev = cached.getAndSet(task);
+        final MyScheduledTask prev = cached.getAndSet(task);
         if (prev != null) {
             prev.cancel();
         } else {
@@ -111,7 +111,7 @@ public final class BungeeExpansion extends PlaceholderExpansion implements Plugi
 
     @Override
     public void stop() {
-        final BukkitTask prev = cached.getAndSet(null);
+        final MyScheduledTask prev = cached.getAndSet(null);
         if (prev == null) {
             return;
         }
